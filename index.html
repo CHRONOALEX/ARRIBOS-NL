@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arribos NLD3</title>
+<style>
+  :root{
+    --bg:#0a0e14;
+    --panel:#10161f;
+    --panel-border:#1c2531;
+    --text:#e6ecf3;
+    --muted:#7c8aa0;
+    --cyan:#22d3ee;
+    --cyan-dim:#0e7490;
+    --badge:#0b3b4a;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
+  body{padding:20px;}
+  .wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 2px 8px;}
+  .topbar h1{font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--text);margin:0;text-transform:uppercase;}
+  .topbar h1 span{color:var(--cyan);}
+
+  select#mesSelect{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    color:var(--text);
+    padding:9px 14px;
+    border-radius:8px;
+    font-size:13px;
+    font-weight:600;
+    outline:none;
+    cursor:pointer;
+  }
+  select#mesSelect:focus{border-color:var(--cyan-dim);}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    padding:20px 22px 14px;
+  }
+  .card-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#c7d0dc;text-transform:uppercase;}
+  .card-head .ico{font-size:14px;}
+  .divider{height:1px;background:linear-gradient(90deg,rgba(255,255,255,.14),rgba(255,255,255,0));margin:14px 0 18px;}
+
+  .metric{text-align:center;margin-bottom:6px;}
+  .metric .num{font-size:44px;font-weight:800;color:var(--cyan);line-height:1;letter-spacing:.01em;}
+  .metric .label{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
+
+  .chart-wrap{position:relative;width:100%;}
+  svg{width:100%;height:auto;display:block;overflow:visible;}
+  .grid-line{stroke:rgba(255,255,255,.06);stroke-width:1;}
+  .axis-label{fill:var(--muted);font-size:10px;}
+  .area-path{fill:url(#areaGrad);}
+  .line-path{fill:none;stroke:var(--cyan);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
+  .pt{fill:var(--bg);stroke:var(--cyan);stroke-width:2.5;}
+  .badge-bg{fill:var(--badge);}
+  .badge-text{fill:#eafcff;font-size:10.5px;font-weight:700;text-anchor:middle;}
+
+  .state{padding:40px 10px;text-align:center;color:var(--muted);font-size:13px;}
+  .state.error{color:#f27272;}
+  footer{text-align:center;color:var(--muted);font-size:11px;padding:6px 0 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <h1>📊 Performance <span>SD</span></h1>
+    <select id="mesSelect"><option>Cargando meses...</option></select>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="ico">🕐</span> Hora Arribo (Mes Seleccionado)</div>
+    <div class="divider"></div>
+
+    <div class="metric">
+      <div class="num" id="totalPaquetes">–</div>
+      <div class="label">Paquetes SD en el periodo</div>
+    </div>
+
+    <div class="chart-wrap" id="chartWrap">
+      <div class="state" id="state">Cargando datos de la hoja...</div>
+    </div>
+  </div>
+
+  <footer>Fuente: hoja "ARRIBOS AMAZON · BITACORA" — actualiza al recargar la página</footer>
+</div>
+
+<script>
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRTaDKwoxDG0EcyeIvgGCubr0nrUSnFi07nXB4EYnz9GyXqgovHv-0SSS_GwGX1nVO0FV9p1dAyGv0d/pub?output=csv";
+
+let RAW_ROWS = [];
+let COLS = { mes:null, fecha:null, hora:null };
+
+function normalize(s){
+  return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
+}
+
+// ---------- CSV parsing (handles quoted fields with commas) ----------
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for(let i=0;i<text.length;i++){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field+='"'; i++; } else { inQuotes=false; }
+      } else field += c;
+    } else {
+      if(c === '"') inQuotes = true;
+      else if(c === ','){ row.push(field); field=""; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+      else if(c === '\r'){ /* skip */ }
+      else field += c;
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c && c.trim() !== ""));
+}
+
+function detectColumns(headers){
+  const norm = headers.map(normalize);
+  const find = (predicate) => {
+    const idx = norm.findIndex(predicate);
+    return idx === -1 ? null : idx;
+  };
+  return {
+    mes:   find(h => h.includes("mes")),
+    fecha: find(h => h.includes("fecha") && h.includes("arrib")),
+    hora:  find(h => h.includes("hora") && h.includes("arrib")),
+  };
+}
+
+// ---------- Fecha parsing ----------
+function excelSerialToDate(serial){
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays * 86400;
+  return new Date(utcValue * 1000);
+}
+function parseFecha(raw){
+  if(raw == null) return null;
+  const v = raw.toString().trim();
+  if(v === "") return null;
+  if(/^\d+(\.\d+)?$/.test(v)){
+    const n = parseFloat(v);
+    if(n > 20000 && n < 60000) return excelSerialToDate(n);
+  }
+  let m = v.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){
+    let [_, d, mo, y] = m;
+    if(y.length === 2) y = "20"+y;
+    const dt = new Date(parseInt(y), parseInt(mo)-1, parseInt(d));
+    if(!isNaN(dt)) return dt;
+  }
+  m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m){
+    const [_, y, mo, d] = m;
+    const dt = new Date(parseInt(y), parseInt(mo)-1, parseInt(d));
+    if(!isNaN(dt)) return dt;
+  }
+  const dt = new Date(v);
+  return isNaN(dt) ? null : dt;
+}
+function formatFechaCorta(dt){
+  return dt.getDate() + "/" + (dt.getMonth()+1);
+}
+
+// ---------- Hora parsing -> horas decimales (0-24) ----------
+function parseHora(raw){
+  if(raw == null) return null;
+  const v = raw.toString().trim();
+  if(v === "") return null;
+
+  // fraccion de dia (serial de Google Sheets), ej: 0.60417
+  if(/^\d(\.\d+)?$/.test(v)){
+    const n = parseFloat(v);
+    if(n >= 0 && n < 1) return n*24;
+  }
+
+  // formato 24h "HH:MM" o "HH:MM:SS"
+  let m = v.match(/^(\d{1,2}):(\d{2})(:(\d{2}))?\s*$/);
+  if(m){
+    const h = parseInt(m[1]), mi = parseInt(m[2]);
+    return h + mi/60;
+  }
+
+  // formato "H:MM a. m./p. m." o "H:MM AM/PM"
+  m = v.match(/^(\d{1,2}):(\d{2})\s*(a\.?\s*m\.?|p\.?\s*m\.?|am|pm)/i);
+  if(m){
+    let h = parseInt(m[1]); const mi = parseInt(m[2]);
+    const ampm = m[3].toLowerCase().replace(/\./g,"").replace(/\s/g,"");
+    if(ampm.startsWith("p") && h < 12) h += 12;
+    if(ampm.startsWith("a") && h === 12) h = 0;
+    return h + mi/60;
+  }
+  return null;
+}
+function formatHoraDecimal(hDec){
+  let h = Math.floor(hDec);
+  let m = Math.round((hDec - h)*60);
+  if(m === 60){ m=0; h+=1; }
+  h = ((h % 24)+24)%24;
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
+
+// ---------- Carga de datos ----------
+async function loadData(){
+  const res = await fetch(SHEET_CSV_URL, { cache: "no-store" });
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  const text = await res.text();
+  const table = parseCSV(text);
+  if(table.length < 2) throw new Error("La hoja no tiene datos suficientes");
+
+  const headers = table[0];
+  COLS = detectColumns(headers);
+  if(COLS.fecha === null || COLS.hora === null){
+    throw new Error("No se encontraron las columnas 'Fecha arribo' y/o 'Hora arribo' en la hoja");
+  }
+
+  RAW_ROWS = table.slice(1).map(r => {
+    const fecha = parseFecha(r[COLS.fecha]);
+    const hora = parseHora(r[COLS.hora]);
+    const mes = COLS.mes !== null ? (r[COLS.mes]||"").toString().trim() : (fecha ? fecha.toLocaleDateString("es-MX",{month:"long",year:"numeric"}) : "");
+    return { fecha, hora, mes, raw:r };
+  }).filter(r => r.fecha);
+}
+
+function buildMesOptions(){
+  const select = document.getElementById("mesSelect");
+  const mesesVistos = [];
+  const mesKeyOf = r => COLS.mes !== null ? r.mes : (r.fecha.getFullYear()+"-"+String(r.fecha.getMonth()+1).padStart(2,"0"));
+  const mesLabelOf = r => COLS.mes !== null ? r.mes : r.fecha.toLocaleDateString("es-MX",{month:"long",year:"numeric"});
+
+  const seen = new Map();
+  RAW_ROWS.forEach(r=>{
+    const key = mesKeyOf(r);
+    if(key && !seen.has(key)) seen.set(key, mesLabelOf(r));
+  });
+
+  // orden cronologico usando la primera fecha de cada mes
+  const order = new Map();
+  RAW_ROWS.forEach(r=>{
+    const key = mesKeyOf(r);
+    if(!order.has(key) || r.fecha < order.get(key)) order.set(key, r.fecha);
+  });
+  const keys = [...seen.keys()].sort((a,b)=> order.get(a) - order.get(b));
+
+  select.innerHTML = "";
+  keys.forEach(k=>{
+    const opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = seen.get(k);
+    select.appendChild(opt);
+  });
+
+  if(keys.length){
+    select.value = keys[keys.length-1]; // mes mas reciente por defecto
+  }
+  select.addEventListener("change", renderChart);
+  select._mesKeyOf = mesKeyOf;
+}
+
+function renderChart(){
+  const select = document.getElementById("mesSelect");
+  const mesKeyOf = select._mesKeyOf;
+  const mesElegido = select.value;
+
+  let rows = RAW_ROWS.filter(r => mesKeyOf(r) === mesElegido && r.hora !== null);
+  rows.sort((a,b)=> a.fecha - b.fecha);
+
+  document.getElementById("totalPaquetes").textContent = RAW_ROWS.filter(r => mesKeyOf(r) === mesElegido).length;
+
+  const wrap = document.getElementById("chartWrap");
+  if(rows.length === 0){
+    wrap.innerHTML = '<div class="state">Sin datos de Hora Arribo para este mes.</div>';
+    return;
+  }
+
+  // Agrupar por fecha (promedio si hay varias horas el mismo dia)
+  const porFecha = new Map();
+  rows.forEach(r=>{
+    const key = r.fecha.toDateString();
+    if(!porFecha.has(key)) porFecha.set(key, {fecha:r.fecha, horas:[]});
+    porFecha.get(key).horas.push(r.hora);
+  });
+  const puntos = [...porFecha.values()]
+    .map(p => ({ fecha:p.fecha, hora: p.horas.reduce((a,b)=>a+b,0)/p.horas.length }))
+    .sort((a,b)=> a.fecha - b.fecha);
+
+  drawAreaChart(wrap, puntos);
+}
+
+function drawAreaChart(container, puntos){
+  const W = 1000, H = 340;
+  const padL = 34, padR = 20, padT = 40, padB = 28;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+
+  const maxH = Math.max(24, Math.ceil(Math.max(...puntos.map(p=>p.hora))) + 1);
+  const minH = 0;
+
+  const xFor = i => padL + (puntos.length === 1 ? plotW/2 : (i/(puntos.length-1))*plotW);
+  const yFor = h => padT + plotH - ((h-minH)/(maxH-minH))*plotH;
+
+  let linePath = "";
+  puntos.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.hora);
+    linePath += (i===0? "M":"L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+  });
+
+  let areaPath = linePath + `L ${xFor(puntos.length-1).toFixed(1)} ${(padT+plotH).toFixed(1)} L ${xFor(0).toFixed(1)} ${(padT+plotH).toFixed(1)} Z`;
+
+  // gridlines horizontales (5 niveles)
+  const gridCount = 5;
+  let gridLines = "", gridLabels = "";
+  for(let g=0; g<=gridCount; g++){
+    const val = (maxH/gridCount)*g;
+    const y = yFor(val);
+    gridLines += `<line class="grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"/>`;
+    gridLabels += `<text class="axis-label" x="${padL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${Math.round(val)}</text>`;
+  }
+
+  // puntos + badges + etiquetas eje x
+  let points = "", badges = "", xLabels = "";
+  puntos.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.hora);
+    points += `<circle class="pt" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.5"/>`;
+
+    const label = formatHoraDecimal(p.hora);
+    const bw = 15 + label.length*6.4, bh = 20;
+    const by = Math.max(2, y - bh - 10);
+    badges += `<rect class="badge-bg" x="${(x-bw/2).toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="6"/>`;
+    badges += `<text class="badge-text" x="${x.toFixed(1)}" y="${(by+bh/2+3.6).toFixed(1)}">${label}</text>`;
+
+    // evitar amontonar etiquetas de fecha si hay demasiados puntos
+    const showEvery = puntos.length > 16 ? Math.ceil(puntos.length/16) : 1;
+    if(i % showEvery === 0){
+      xLabels += `<text class="axis-label" x="${x.toFixed(1)}" y="${(H-6)}" text-anchor="middle">${formatFechaCorta(p.fecha)}</text>`;
+    }
+  });
+
+  container.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0891b2" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#0891b2" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      ${gridLines}
+      ${gridLabels}
+      <path class="area-path" d="${areaPath}"/>
+      <path class="line-path" d="${linePath}"/>
+      ${points}
+      ${badges}
+      ${xLabels}
+    </svg>
+  `;
+}
+
+async function init(){
+  try{
+    await loadData();
+    document.getElementById("state").remove();
+    buildMesOptions();
+    renderChart();
+  }catch(err){
+    console.error(err);
+    document.getElementById("chartWrap").innerHTML =
+      '<div class="state error">No se pudieron cargar los datos de la hoja.<br>'+
+      'Verifica que esté publicada como CSV y accesible.<br><span style="opacity:.7;font-size:11px">'+err.message+'</span></div>';
+    document.getElementById("mesSelect").innerHTML = '<option>Sin datos</option>';
+  }
+}
+init();
+</script>
+</body>
+</html>
