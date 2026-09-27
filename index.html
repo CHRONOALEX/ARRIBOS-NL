@@ -25,7 +25,8 @@
     --good: #16a34a;
     --warn: #d97706;
     --bad: #dc2626;
-    --hover-col: rgba(37, 99, 235, 0.07);
+    --hover-col: rgba(37, 99, 235, 0.08);
+    --hover-col-border: rgba(37, 99, 235, 0.25);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
@@ -43,11 +44,7 @@
     border-bottom: 4px solid var(--tx-green);
     box-shadow: 0 2px 8px rgba(0,0,0,.12);
   }
-  .tx-logo{
-    display: flex;
-    flex-direction: column;
-    line-height: 1;
-  }
+  .tx-logo{display:flex;flex-direction:column;line-height:1;}
   .tx-logo .tx-wordmark{
     font-size: 26px;
     font-weight: 900;
@@ -71,11 +68,8 @@
     color: #e0e4e8;
     text-transform: uppercase;
   }
-  .tx-header .tx-page-title span{
-    color: var(--tx-green);
-  }
+  .tx-header .tx-page-title span{color: var(--tx-green);}
 
-  /* ---- WRAP ---- */
   .wrap{
     max-width:1320px;
     margin:0 auto;
@@ -206,9 +200,13 @@
   /* ---- interactive hover column ---- */
   .hover-col{
     fill: var(--hover-col);
+    stroke: var(--hover-col-border);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
     opacity: 0;
     transition: opacity .12s ease;
-    pointer-events: none;
+    pointer-events: all;
+    cursor: crosshair;
   }
   .hover-col.active{
     opacity: 1;
@@ -237,6 +235,7 @@
     fill: #1e293b;
     rx: 8;
     ry: 8;
+    filter: drop-shadow(0 3px 6px rgba(0,0,0,.18));
   }
   .tooltip-text{
     fill: #fff;
@@ -246,9 +245,16 @@
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   }
   .tooltip-sub{
-    fill: #94a3b8;
+    fill: #cbd5e1;
     font-size: 9px;
     font-weight: 600;
+    text-anchor: middle;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  .tooltip-value{
+    fill: var(--tx-green);
+    font-size: 10px;
+    font-weight: 800;
     text-anchor: middle;
     font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
   }
@@ -404,6 +410,9 @@ function parseFecha(raw){
 }
 function formatFechaCorta(dt){
   return dt.getDate() + "/" + (dt.getMonth()+1);
+}
+function formatFechaCompleta(dt){
+  return dt.getDate().toString().padStart(2,'0') + "/" + (dt.getMonth()+1).toString().padStart(2,'0') + "/" + dt.getFullYear();
 }
 
 // ---------- Hora parsing ----------
@@ -582,7 +591,6 @@ function drawAreaChart(container, puntos){
   let maxH = Math.ceil(maxReal) + 2;
   if (minH < 0) minH = 0;
   if (maxH > 24) maxH = 24;
-  // si el rango es muy pequeño, ampliar un poco
   if (maxH - minH < 3) {
     minH = Math.max(0, minH - 1);
     maxH = Math.min(24, maxH + 1);
@@ -628,8 +636,9 @@ function drawAreaChart(container, puntos){
     badges += `<rect class="badge-bg" x="${(x-bw/2).toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${bh}" rx="6"/>`;
     badges += `<text class="badge-text" x="${x.toFixed(1)}" y="${(by+bh/2+3.6).toFixed(1)}">${label}</text>`;
 
+    // Performance a 2 decimales
     if(p.perf !== null){
-      overlays += `<text class="perf-text" x="${x.toFixed(1)}" y="${yPerf.toFixed(1)}" fill="${perfColor(p.perf)}">${p.perf.toFixed(1)}%</text>`;
+      overlays += `<text class="perf-text" x="${x.toFixed(1)}" y="${yPerf.toFixed(1)}" fill="${perfColor(p.perf)}">${p.perf.toFixed(2)}%</text>`;
     }
     if(p.paq !== null){
       overlays += `<text class="paq-text" x="${x.toFixed(1)}" y="${yPaq.toFixed(1)}">${p.paq}</text>`;
@@ -638,7 +647,7 @@ function drawAreaChart(container, puntos){
     xLabels += `<text class="date-label" x="${x.toFixed(1)}" y="${yDate.toFixed(1)}" text-anchor="middle">${formatFechaCorta(p.fecha)}</text>`;
   });
 
-  // ---- columnas virtuales de hover ----
+  // ---- columnas virtuales de hover (desde padT hasta plotBottom) ----
   const colWidth = puntos.length > 1 ? (xFor(1) - xFor(0)) : plotW * 0.6;
   let hoverCols = "";
   puntos.forEach((p,i)=>{
@@ -654,20 +663,24 @@ function drawAreaChart(container, puntos){
     hoverPoints += `<circle class="hover-point" data-index="${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" />`;
   });
 
-  // ---- tooltips ----
+  // ---- tooltips con datos completos ----
   let tooltips = "";
   puntos.forEach((p,i)=>{
     const x = xFor(i), y = yFor(p.hora);
     const label = formatHoraDecimal(p.hora);
-    const perfStr = p.perf !== null ? p.perf.toFixed(1)+'%' : '—';
+    const perfStr = p.perf !== null ? p.perf.toFixed(2)+'%' : '—';
     const paqStr = p.paq !== null ? p.paq : '—';
-    const tw = 130, th = 46;
-    const tx = x - tw/2;
+    const fechaStr = formatFechaCompleta(p.fecha);
+    const tw = 158, th = 62;
+    let tx = x - tw/2;
+    if (tx < 2) tx = 2;
+    if (tx + tw > W - 2) tx = W - tw - 2;
     const ty = Math.max(4, y - th - 18);
     tooltips += `<g class="hover-tooltip" data-index="${i}">
       <rect class="tooltip-bg" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw}" height="${th}" rx="8" />
-      <text class="tooltip-text" x="${x.toFixed(1)}" y="${(ty+16).toFixed(1)}">${label}  ·  ${perfStr}</text>
-      <text class="tooltip-sub" x="${x.toFixed(1)}" y="${(ty+33).toFixed(1)}">📦 ${paqStr} paquetes</text>
+      <text class="tooltip-text" x="${(tx+tw/2).toFixed(1)}" y="${(ty+15).toFixed(1)}">${fechaStr}</text>
+      <text class="tooltip-sub" x="${(tx+tw/2).toFixed(1)}" y="${(ty+30).toFixed(1)}">Performance SameDay: <tspan class="tooltip-value">${perfStr}</tspan></text>
+      <text class="tooltip-sub" x="${(tx+tw/2).toFixed(1)}" y="${(ty+45).toFixed(1)}">Hora Arribo: <tspan class="tooltip-value">${label}</tspan>  ·  Paquetes SD: <tspan class="tooltip-value">${paqStr}</tspan></text>
     </g>`;
   });
 
@@ -721,7 +734,6 @@ function drawAreaChart(container, puntos){
     });
   });
 
-  // también para los puntos de hover (por si el mouse entra directo)
   hPoints.forEach((pt) => {
     pt.addEventListener('mouseenter', (e) => {
       const idx = parseInt(e.target.dataset.index, 10);
