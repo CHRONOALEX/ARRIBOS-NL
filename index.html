@@ -6,17 +6,17 @@
 <title>Arribos NLD3</title>
 <style>
   :root{
-    --bg:#0a0e14;
-    --panel:#10161f;
-    --panel-border:#1c2531;
-    --text:#e6ecf3;
-    --muted:#7c8aa0;
-    --cyan:#22d3ee;
-    --cyan-dim:#0e7490;
-    --badge:#0b3b4a;
-    --good:#4ade80;
-    --warn:#fbbf24;
-    --bad:#f87171;
+    --bg:#ffffff;
+    --panel:#ffffff;
+    --panel-border:#e2e8f0;
+    --text:#1e293b;
+    --muted:#64748b;
+    --cyan:#2563eb;
+    --cyan-dim:#93c5fd;
+    --badge:#2563eb;
+    --good:#16a34a;
+    --warn:#d97706;
+    --bad:#dc2626;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
@@ -45,6 +45,7 @@
     border:1px solid var(--panel-border);
     border-radius:14px;
     padding:20px 22px 14px;
+    box-shadow:0 1px 3px rgba(15,23,42,.06);
   }
   .card-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#c7d0dc;text-transform:uppercase;}
   .card-head .ico{font-size:14px;}
@@ -59,16 +60,16 @@
 
   .chart-wrap{position:relative;width:100%;}
   svg{width:100%;height:auto;display:block;overflow:visible;}
-  .grid-line{stroke:rgba(255,255,255,.06);stroke-width:1;}
+  .grid-line{stroke:rgba(15,23,42,.08);stroke-width:1;}
   .axis-label{fill:var(--muted);font-size:10px;}
   .date-label{fill:var(--muted);font-size:9px;}
   .area-path{fill:url(#areaGrad);}
   .line-path{fill:none;stroke:var(--cyan);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
   .pt{fill:var(--bg);stroke:var(--cyan);stroke-width:2.5;}
   .badge-bg{fill:var(--badge);}
-  .badge-text{fill:#eafcff;font-size:10px;font-weight:700;text-anchor:middle;}
+  .badge-text{fill:#ffffff;font-size:10px;font-weight:700;text-anchor:middle;}
   .perf-text{font-size:9.5px;font-weight:800;text-anchor:middle;}
-  .paq-text{fill:#9fb3c8;font-size:9px;font-weight:700;text-anchor:middle;}
+  .paq-text{fill:#475569;font-size:9px;font-weight:700;text-anchor:middle;}
 
   .state{padding:40px 10px;text-align:center;color:var(--muted);font-size:13px;}
   .state.error{color:#f27272;}
@@ -395,7 +396,7 @@ function drawAreaChart(container, puntos){
     badges += `<text class="badge-text" x="${x.toFixed(1)}" y="${(by+bh/2+3.6).toFixed(1)}">${label}</text>`;
 
     if(p.perf !== null){
-      overlays += `<text class="perf-text" x="${x.toFixed(1)}" y="${yPerf.toFixed(1)}" fill="${perfColor(p.perf)}">${Math.round(p.perf)}%</text>`;
+      overlays += `<text class="perf-text" x="${x.toFixed(1)}" y="${yPerf.toFixed(1)}" fill="${perfColor(p.perf)}">${p.perf.toFixed(1)}%</text>`;
     }
     if(p.paq !== null){
       overlays += `<text class="paq-text" x="${x.toFixed(1)}" y="${yPaq.toFixed(1)}">${p.paq}</text>`;
@@ -408,8 +409,8 @@ function drawAreaChart(container, puntos){
     <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#0891b2" stop-opacity="0.55"/>
-          <stop offset="100%" stop-color="#0891b2" stop-opacity="0"/>
+          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.30"/>
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
         </linearGradient>
       </defs>
       ${gridLines}
