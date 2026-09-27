@@ -6,25 +6,101 @@
 <title>Arribos NLD3</title>
 <style>
   :root{
-    --bg:#ffffff;
-    --panel:#ffffff;
-    --panel-border:#e2e8f0;
-    --text:#1e293b;
-    --muted:#64748b;
-    --cyan:#2563eb;
-    --cyan-dim:#93c5fd;
-    --badge:#2563eb;
-    --good:#16a34a;
-    --warn:#d97706;
-    --bad:#dc2626;
+    /* Traxion palette */
+    --tx-green: #d4e600;
+    --tx-green-dark: #b8c900;
+    --tx-dark: #2d2d2d;
+    --tx-gray: #4a4a4a;
+    --tx-light: #f4f5f7;
+    --tx-white: #ffffff;
+
+    --bg: #f0f2f5;
+    --panel: #ffffff;
+    --panel-border: #e0e4e8;
+    --text: #1e293b;
+    --muted: #6b7a8f;
+    --cyan: #2563eb;
+    --cyan-dim: #93c5fd;
+    --badge: #2563eb;
+    --good: #16a34a;
+    --warn: #d97706;
+    --bad: #dc2626;
+    --hover-col: rgba(37, 99, 235, 0.07);
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;}
-  body{padding:18px;}
-  .wrap{max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
+  body{padding:0 0 18px 0;}
 
-  .topbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:4px 2px 8px;}
-  .topbar h1{font-size:15px;letter-spacing:.08em;font-weight:700;color:var(--text);margin:0;text-transform:uppercase;}
+  /* ---- TRAXION HEADER ---- */
+  .tx-header{
+    background: var(--tx-dark);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 4px solid var(--tx-green);
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .tx-logo{
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+  }
+  .tx-logo .tx-wordmark{
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--tx-green);
+    text-transform: uppercase;
+    font-family: "Arial Black", "Segoe UI", sans-serif;
+  }
+  .tx-logo .tx-tagline{
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: #9a9a9a;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .tx-header .tx-page-title{
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: #e0e4e8;
+    text-transform: uppercase;
+  }
+  .tx-header .tx-page-title span{
+    color: var(--tx-green);
+  }
+
+  /* ---- WRAP ---- */
+  .wrap{
+    max-width:1320px;
+    margin:0 auto;
+    padding: 18px 18px 0;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    padding:4px 2px 8px;
+  }
+  .topbar h1{
+    font-size:15px;
+    letter-spacing:.08em;
+    font-weight:700;
+    color:var(--text);
+    margin:0;
+    text-transform:uppercase;
+  }
   .topbar h1 span{color:var(--cyan);}
 
   select#mesSelect{
@@ -37,6 +113,7 @@
     font-weight:600;
     outline:none;
     cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
   }
   select#mesSelect:focus{border-color:var(--cyan-dim);}
 
@@ -47,36 +124,177 @@
     padding:20px 22px 14px;
     box-shadow:0 1px 3px rgba(15,23,42,.06);
   }
-  .card-head{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.08em;color:#c7d0dc;text-transform:uppercase;}
+  .card-head{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.08em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
   .card-head .ico{font-size:14px;}
-  .divider{height:1px;background:linear-gradient(90deg,rgba(255,255,255,.14),rgba(255,255,255,0));margin:14px 0 18px;}
+  .divider{
+    height:1px;
+    background:linear-gradient(90deg, rgba(37,99,235,.15), rgba(37,99,235,0));
+    margin:14px 0 18px;
+  }
 
   .metric{text-align:center;margin-bottom:6px;}
-  .metric .num{font-size:44px;font-weight:800;color:var(--cyan);line-height:1;letter-spacing:.01em;}
-  .metric .label{margin-top:6px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;}
+  .metric .num{
+    font-size:44px;
+    font-weight:800;
+    color:var(--cyan);
+    line-height:1;
+    letter-spacing:.01em;
+  }
+  .metric .label{
+    margin-top:6px;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.1em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
 
-  .legend{display:flex;justify-content:center;gap:18px;margin:4px 0 4px;font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.03em;}
-  .legend span.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  .legend{
+    display:flex;
+    justify-content:center;
+    gap:18px;
+    margin:4px 0 4px;
+    font-size:10.5px;
+    color:var(--muted);
+    font-weight:600;
+    letter-spacing:.03em;
+  }
+  .legend span.dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    margin-right:5px;
+    vertical-align:middle;
+  }
 
   .chart-wrap{position:relative;width:100%;}
   svg{width:100%;height:auto;display:block;overflow:visible;}
+
+  /* ---- chart elements ---- */
   .grid-line{stroke:rgba(15,23,42,.08);stroke-width:1;}
   .axis-label{fill:var(--muted);font-size:10px;}
   .date-label{fill:var(--muted);font-size:9px;}
   .area-path{fill:url(#areaGrad);}
-  .line-path{fill:none;stroke:var(--cyan);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
-  .pt{fill:var(--bg);stroke:var(--cyan);stroke-width:2.5;}
+  .line-path{
+    fill:none;
+    stroke:var(--cyan);
+    stroke-width:2.5;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  .pt{
+    fill:var(--bg);
+    stroke:var(--cyan);
+    stroke-width:2.5;
+    transition: r .15s ease;
+  }
   .badge-bg{fill:var(--badge);}
   .badge-text{fill:#ffffff;font-size:10px;font-weight:700;text-anchor:middle;}
   .perf-text{font-size:9.5px;font-weight:800;text-anchor:middle;}
   .paq-text{fill:#475569;font-size:9px;font-weight:700;text-anchor:middle;}
 
-  .state{padding:40px 10px;text-align:center;color:var(--muted);font-size:13px;}
+  /* ---- interactive hover column ---- */
+  .hover-col{
+    fill: var(--hover-col);
+    opacity: 0;
+    transition: opacity .12s ease;
+    pointer-events: none;
+  }
+  .hover-col.active{
+    opacity: 1;
+  }
+  .hover-point{
+    fill: var(--cyan);
+    stroke: #fff;
+    stroke-width: 2.5;
+    r: 6;
+    opacity: 0;
+    transition: opacity .12s ease;
+    pointer-events: none;
+  }
+  .hover-point.active{
+    opacity: 1;
+  }
+  .hover-tooltip{
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+  .hover-tooltip.active{
+    opacity: 1;
+  }
+  .tooltip-bg{
+    fill: #1e293b;
+    rx: 8;
+    ry: 8;
+  }
+  .tooltip-text{
+    fill: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-anchor: middle;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+  .tooltip-sub{
+    fill: #94a3b8;
+    font-size: 9px;
+    font-weight: 600;
+    text-anchor: middle;
+    font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  }
+
+  .state{
+    padding:40px 10px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
   .state.error{color:#f27272;}
-  footer{text-align:center;color:var(--muted);font-size:11px;padding:6px 0 0;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:11px;
+    padding:6px 0 0;
+  }
+
+  /* ---- responsive ---- */
+  @media (max-width: 700px){
+    .tx-header{
+      padding: 10px 16px;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .tx-logo .tx-wordmark{font-size: 20px; letter-spacing: 3px;}
+    .tx-header .tx-page-title{font-size: 11px;}
+    .wrap{padding: 12px 10px 0;}
+    .metric .num{font-size: 32px;}
+    .card{padding: 14px 12px 10px;}
+    .legend{flex-wrap: wrap; gap: 10px;}
+  }
 </style>
 </head>
 <body>
+
+<!-- TRAXION HEADER -->
+<header class="tx-header">
+  <div class="tx-logo">
+    <div class="tx-wordmark">TRAXION</div>
+    <div class="tx-tagline">VIDA EN MOVIMIENTO</div>
+  </div>
+  <div class="tx-page-title">📊 Arribos <span>NLD3</span></div>
+</header>
+
 <div class="wrap">
 
   <div class="topbar">
@@ -117,7 +335,7 @@ function normalize(s){
   return (s||"").toString().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().toLowerCase();
 }
 
-// ---------- CSV parsing (handles quoted fields with commas) ----------
+// ---------- CSV parsing ----------
 function parseCSV(text){
   const rows = [];
   let row = [], field = "", inQuotes = false;
@@ -188,7 +406,7 @@ function formatFechaCorta(dt){
   return dt.getDate() + "/" + (dt.getMonth()+1);
 }
 
-// ---------- Hora parsing -> horas decimales (0-24) ----------
+// ---------- Hora parsing ----------
 function parseHora(raw){
   if(raw == null) return null;
   const v = raw.toString().trim();
@@ -223,7 +441,7 @@ function formatHoraDecimal(hDec){
   return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
 }
 
-// ---------- Performance parsing -> porcentaje 0-100 ----------
+// ---------- Performance parsing ----------
 function parsePerf(raw){
   if(raw == null) return null;
   let v = raw.toString().trim();
@@ -352,17 +570,29 @@ function renderChart(){
 }
 
 function drawAreaChart(container, puntos){
-  const W = Math.max(1000, puntos.length * 34), H = 400;
-  const padL = 34, padR = 20, padT = 42, padB = 78;
+  const W = Math.max(1000, puntos.length * 36), H = 420;
+  const padL = 40, padR = 24, padT = 46, padB = 82;
   const plotW = W - padL - padR, plotH = H - padT - padB;
 
-  const maxH = Math.max(24, Math.ceil(Math.max(...puntos.map(p=>p.hora))) + 1);
-  const minH = 0;
+  // ---- AJUSTE: rango de horas dinámico (min-1 a max+2) ----
+  const horasArr = puntos.map(p => p.hora).filter(h => h !== null);
+  const minReal = Math.min(...horasArr);
+  const maxReal = Math.max(...horasArr);
+  let minH = Math.floor(minReal) - 1;
+  let maxH = Math.ceil(maxReal) + 2;
+  if (minH < 0) minH = 0;
+  if (maxH > 24) maxH = 24;
+  // si el rango es muy pequeño, ampliar un poco
+  if (maxH - minH < 3) {
+    minH = Math.max(0, minH - 1);
+    maxH = Math.min(24, maxH + 1);
+  }
 
   const xFor = i => padL + (puntos.length === 1 ? plotW/2 : (i/(puntos.length-1))*plotW);
-  const yFor = h => padT + plotH - ((h-minH)/(maxH-minH))*plotH;
+  const yFor = h => padT + plotH - ((h - minH)/(maxH - minH))*plotH;
   const plotBottom = padT + plotH;
 
+  // path de la línea
   let linePath = "";
   puntos.forEach((p,i)=>{
     const x = xFor(i), y = yFor(p.hora);
@@ -371,19 +601,22 @@ function drawAreaChart(container, puntos){
 
   let areaPath = linePath + `L ${xFor(puntos.length-1).toFixed(1)} ${plotBottom.toFixed(1)} L ${xFor(0).toFixed(1)} ${plotBottom.toFixed(1)} Z`;
 
+  // grid horizontal
   const gridCount = 5;
   let gridLines = "", gridLabels = "";
   for(let g=0; g<=gridCount; g++){
-    const val = (maxH/gridCount)*g;
+    const val = minH + ((maxH - minH)/gridCount)*g;
     const y = yFor(val);
     gridLines += `<line class="grid-line" x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}"/>`;
     gridLabels += `<text class="axis-label" x="${padL-8}" y="${(y+3).toFixed(1)}" text-anchor="end">${Math.round(val)}</text>`;
   }
 
+  // posiciones Y para textos inferiores
   const yPerf = plotBottom + 22;
   const yPaq  = plotBottom + 38;
   const yDate = plotBottom + 58;
 
+  // construir puntos, badges, overlays, etiquetas
   let points = "", badges = "", overlays = "", xLabels = "";
   puntos.forEach((p,i)=>{
     const x = xFor(i), y = yFor(p.hora);
@@ -405,8 +638,41 @@ function drawAreaChart(container, puntos){
     xLabels += `<text class="date-label" x="${x.toFixed(1)}" y="${yDate.toFixed(1)}" text-anchor="middle">${formatFechaCorta(p.fecha)}</text>`;
   });
 
+  // ---- columnas virtuales de hover ----
+  const colWidth = puntos.length > 1 ? (xFor(1) - xFor(0)) : plotW * 0.6;
+  let hoverCols = "";
+  puntos.forEach((p,i)=>{
+    const x = xFor(i);
+    const colX = x - colWidth/2;
+    hoverCols += `<rect class="hover-col" data-index="${i}" x="${colX.toFixed(1)}" y="${padT}" width="${colWidth.toFixed(1)}" height="${plotH}" />`;
+  });
+
+  // ---- puntos de hover (círculos grandes) ----
+  let hoverPoints = "";
+  puntos.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.hora);
+    hoverPoints += `<circle class="hover-point" data-index="${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" />`;
+  });
+
+  // ---- tooltips ----
+  let tooltips = "";
+  puntos.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p.hora);
+    const label = formatHoraDecimal(p.hora);
+    const perfStr = p.perf !== null ? p.perf.toFixed(1)+'%' : '—';
+    const paqStr = p.paq !== null ? p.paq : '—';
+    const tw = 130, th = 46;
+    const tx = x - tw/2;
+    const ty = Math.max(4, y - th - 18);
+    tooltips += `<g class="hover-tooltip" data-index="${i}">
+      <rect class="tooltip-bg" x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" width="${tw}" height="${th}" rx="8" />
+      <text class="tooltip-text" x="${x.toFixed(1)}" y="${(ty+16).toFixed(1)}">${label}  ·  ${perfStr}</text>
+      <text class="tooltip-sub" x="${x.toFixed(1)}" y="${(ty+33).toFixed(1)}">📦 ${paqStr} paquetes</text>
+    </g>`;
+  });
+
   container.innerHTML = `
-    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
+    <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" id="chartSvg">
       <defs>
         <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.30"/>
@@ -421,8 +687,50 @@ function drawAreaChart(container, puntos){
       ${badges}
       ${overlays}
       ${xLabels}
+      ${hoverCols}
+      ${hoverPoints}
+      ${tooltips}
     </svg>
   `;
+
+  // ---- interacción hover ----
+  const svg = container.querySelector('#chartSvg');
+  if (!svg) return;
+  const cols = svg.querySelectorAll('.hover-col');
+  const hPoints = svg.querySelectorAll('.hover-point');
+  const tooltipsEls = svg.querySelectorAll('.hover-tooltip');
+
+  function activateIndex(idx){
+    cols.forEach((el,i)=> el.classList.toggle('active', i === idx));
+    hPoints.forEach((el,i)=> el.classList.toggle('active', i === idx));
+    tooltipsEls.forEach((el,i)=> el.classList.toggle('active', i === idx));
+  }
+  function deactivateAll(){
+    cols.forEach(el => el.classList.remove('active'));
+    hPoints.forEach(el => el.classList.remove('active'));
+    tooltipsEls.forEach(el => el.classList.remove('active'));
+  }
+
+  cols.forEach((col) => {
+    col.addEventListener('mouseenter', (e) => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx)) activateIndex(idx);
+    });
+    col.addEventListener('mouseleave', () => {
+      deactivateAll();
+    });
+  });
+
+  // también para los puntos de hover (por si el mouse entra directo)
+  hPoints.forEach((pt) => {
+    pt.addEventListener('mouseenter', (e) => {
+      const idx = parseInt(e.target.dataset.index, 10);
+      if (!isNaN(idx)) activateIndex(idx);
+    });
+    pt.addEventListener('mouseleave', () => {
+      deactivateAll();
+    });
+  });
 }
 
 async function init(){
